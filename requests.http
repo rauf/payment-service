@@ -1,0 +1,8 @@
+POST http://localhost:8080/api/v1/deposit
+
+{
+  "amount": 0,
+  "currency": "USD"
+}
+
+

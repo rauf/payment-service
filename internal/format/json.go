@@ -17,6 +17,5 @@ func (h *JSON) Marshal(data any) ([]byte, error) {
 }
 
 func (h *JSON) Unmarshal(data []byte, v any) error {
-	err := json.Unmarshal(data, &v)
-	return err
+	return json.Unmarshal(data, v)
 }

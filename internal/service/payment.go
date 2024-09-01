@@ -22,7 +22,7 @@ func NewPaymentService(router *router.Router) *PaymentService {
 }
 
 func (s *PaymentService) Deposit(ctx context.Context, deposit models.DepositRequest) (models.DepositResponse, error) {
-	response, err := s.router.SendMessage(deposit.PreferredGateway, func(g gateway.PaymentGateway) (any, error) {
+	response, err := s.router.SendMessage(ctx, deposit.PreferredGateway, func(g gateway.PaymentGateway) (any, error) {
 		return g.Deposit(ctx, deposit)
 	})
 	if errors.Is(err, gateway.ErrGatewayUnavailable) {
@@ -35,11 +35,16 @@ func (s *PaymentService) Deposit(ctx context.Context, deposit models.DepositRequ
 }
 
 func (s *PaymentService) Withdraw(ctx context.Context, withdrawal models.WithdrawalRequest) (models.WithdrawalResponse, error) {
-	response, err := s.router.SendMessage(withdrawal.PreferredGateway, func(g gateway.PaymentGateway) (any, error) {
+	response, err := s.router.SendMessage(ctx, withdrawal.PreferredGateway, func(g gateway.PaymentGateway) (any, error) {
 		return g.Withdraw(ctx, withdrawal)
 	})
 	if err != nil {
 		return models.WithdrawalResponse{}, err
 	}
 	return utils.Cast[models.WithdrawalResponse](response)
+}
+
+func (s *PaymentService) UpdateStatus(ctx context.Context, req models.UpdateStatusRequest) error {
+
+	return nil
 }

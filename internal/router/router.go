@@ -1,8 +1,10 @@
 package router
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/rauf/payment-service/internal/gateway"
 )
@@ -17,22 +19,22 @@ func NewRouter(registry *gateway.Registry) *Router {
 	}
 }
 
-func (r *Router) SendMessage(preferredGateway string, operation func(gateway.PaymentGateway) (any, error)) (any, error) {
+func (r *Router) SendMessage(ctx context.Context, preferredGateway string, operation func(gateway.PaymentGateway) (any, error)) (any, error) {
 	allGateways, err := r.registry.ListWithPreference(preferredGateway)
 	if err != nil {
 		return "", fmt.Errorf("failed to get preferred gateways list: %w", err)
 	}
 
-	var lastError error
 	for _, g := range allGateways {
-		result, err := operation(g)
+		var result any
+		slog.InfoContext(ctx, "Sending request to gateway", "gateway", g.Name())
+		result, err = operation(g)
 		if err == nil {
 			return result, nil
 		}
-		lastError = err
 		if errors.Is(err, gateway.ErrGatewayUnavailable) {
 			continue
 		}
 	}
-	return "", fmt.Errorf("all gateways failed: %w", lastError)
+	return "", fmt.Errorf("all gateways failed: %w", err)
 }

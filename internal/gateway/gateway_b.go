@@ -9,15 +9,16 @@ import (
 	"github.com/rauf/payment-service/internal/format"
 	"github.com/rauf/payment-service/internal/models"
 	"github.com/rauf/payment-service/internal/protocol"
+	"github.com/rauf/payment-service/internal/utils/randutil"
 )
 
 type GatewayB struct {
-	baseGateway
+	baseGateway[gatewayBRequest, gatewayBResponse]
 }
 
 func NewGatewayISO8583(address string) *GatewayB {
 	return &GatewayB{
-		baseGateway: newBaseGateway(
+		baseGateway: newBaseGateway[gatewayBRequest, gatewayBResponse](
 			"Gateway-B",
 			format.NewISO8583Protocol(),
 			protocol.NewTCPConnection(address),
@@ -31,12 +32,12 @@ func NewGatewayISO8583(address string) *GatewayB {
 
 func (g *GatewayB) Deposit(ctx context.Context, deposit models.DepositRequest) (models.DepositResponse, error) {
 	return models.DepositResponse{
-		TransactionID: "test",
+		TransactionID: randutil.RandomString(10),
 	}, nil
 }
 
 func (g *GatewayB) Withdraw(ctx context.Context, withdrawal models.WithdrawalRequest) (models.WithdrawalResponse, error) {
 	return models.WithdrawalResponse{
-		TransactionID: "test",
+		TransactionID: randutil.RandomString(10),
 	}, nil
 }

@@ -65,8 +65,12 @@ func (r *Registry) List() []PaymentGateway {
 	defer r.mu.RUnlock()
 
 	gateways := make([]PaymentGateway, 0, len(r.gateways))
-	for _, g := range r.gateways {
-		gateways = append(gateways, g)
+	for _, o := range r.order {
+		gateway, err := r.Get(o)
+		if err != nil {
+			continue
+		}
+		gateways = append(gateways, gateway)
 	}
 	return gateways
 }

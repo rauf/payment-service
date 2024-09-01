@@ -11,10 +11,11 @@ import (
 	"github.com/rauf/payment-service/internal/format"
 	"github.com/rauf/payment-service/internal/models"
 	"github.com/rauf/payment-service/internal/protocol"
+	"github.com/rauf/payment-service/internal/utils/randutil"
 )
 
 type GatewayA struct {
-	baseGateway
+	baseGateway[gatewayARequest, gatewayAResponse]
 }
 
 func NewGatewayA(address string) *GatewayA {
@@ -22,10 +23,10 @@ func NewGatewayA(address string) *GatewayA {
 		Timeout: 10 * time.Second,
 	}
 	return &GatewayA{
-		baseGateway: newBaseGateway(
+		baseGateway: newBaseGateway[gatewayARequest, gatewayAResponse](
 			"Gateway-A",
 			format.NewJSONProtocol(),
-			protocol.NewHTTPConnection(httpClient, http.MethodPost, address),
+			protocol.NewHTTPConnectionMock(httpClient, http.MethodPost, address),
 			config.RetryConfig{
 				MaxRetries: 3,
 				Backoff:    backoff.NewExponentialBackoff(1*time.Second, 1.2, 2*time.Second),
@@ -35,27 +36,24 @@ func NewGatewayA(address string) *GatewayA {
 }
 
 func (g *GatewayA) Deposit(ctx context.Context, deposit models.DepositRequest) (models.DepositResponse, error) {
-	req := struct {
-		Type     string  `json:"type"`
-		Amount   float64 `json:"amount"`
-		Currency string  `json:"currency"`
-	}{
-		Type:     "deposit",
+	req := gatewayARequest{
 		Amount:   deposit.Amount,
 		Currency: deposit.Currency,
 	}
-	_, err := g.SendWithRetry(ctx, req)
+	res, err := g.SendWithRetry(ctx, req)
 	if err != nil {
 		return models.DepositResponse{}, fmt.Errorf("error sending deposit request: %w", err)
 	}
 
 	return models.DepositResponse{
-		TransactionID: "test",
+		TransactionID: res.TransactionID,
+		Status:        res.Status,
+		CreatedAt:     res.CreatedAt,
 	}, nil
 }
 
 func (g *GatewayA) Withdraw(ctx context.Context, withdrawal models.WithdrawalRequest) (models.WithdrawalResponse, error) {
 	return models.WithdrawalResponse{
-		TransactionID: "test",
+		TransactionID: randutil.RandomString(10),
 	}, nil
 }

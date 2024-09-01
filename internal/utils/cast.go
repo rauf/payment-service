@@ -2,7 +2,7 @@ package utils
 
 import "errors"
 
-func Cast[T any](v interface{}) (T, error) {
+func Cast[T any](v any) (T, error) {
 	if casted, ok := v.(T); ok {
 		return casted, nil
 	}
