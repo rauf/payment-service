@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/rauf/payment-service/internal/gateway"
@@ -29,9 +30,9 @@ func (r *Router) SendMessage(preferredGateway string, operation func(gateway.Pay
 			return result, nil
 		}
 		lastError = err
-		//if errors.Is(err, gateway.ErrGatewayUnavailable) { // TODO: error handling
-		//	continue
-		//}
+		if errors.Is(err, gateway.ErrGatewayUnavailable) {
+			continue
+		}
 	}
 	return "", fmt.Errorf("all gateways failed: %w", lastError)
 }

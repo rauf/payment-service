@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/rauf/payment-service/internal/gateway"
 	"github.com/rauf/payment-service/internal/models"
@@ -23,8 +25,11 @@ func (s *PaymentService) Deposit(ctx context.Context, deposit models.DepositRequ
 	response, err := s.router.SendMessage(deposit.PreferredGateway, func(g gateway.PaymentGateway) (any, error) {
 		return g.Deposit(ctx, deposit)
 	})
+	if errors.Is(err, gateway.ErrGatewayUnavailable) {
+		return models.DepositResponse{}, fmt.Errorf("all payment gateways are currently unavailable: %w", err)
+	}
 	if err != nil {
-		return models.DepositResponse{}, err
+		return models.DepositResponse{}, fmt.Errorf("deposit failed: %w", err)
 	}
 	return utils.Cast[models.DepositResponse](response)
 }

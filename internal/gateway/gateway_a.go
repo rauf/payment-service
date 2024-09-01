@@ -22,25 +22,29 @@ func NewGatewayA(address string) *GatewayA {
 		Timeout: 10 * time.Second,
 	}
 	return &GatewayA{
-		baseGateway: baseGateway{
-			name:            "gateway-a",
-			dataFormat:      format.NewJSONProtocol(),
-			protocolHandler: protocol.NewHTTPConnection(httpClient, http.MethodPost, address),
-			retryConfig: config.RetryConfig{
+		baseGateway: newBaseGateway(
+			"Gateway-A",
+			format.NewJSONProtocol(),
+			protocol.NewHTTPConnection(httpClient, http.MethodPost, address),
+			config.RetryConfig{
 				MaxRetries: 3,
 				Backoff:    backoff.NewExponentialBackoff(1*time.Second, 1.2, 2*time.Second),
 			},
-		},
+		),
 	}
 }
 
 func (g *GatewayA) Deposit(ctx context.Context, deposit models.DepositRequest) (models.DepositResponse, error) {
-	request := map[string]any{
-		"type":     "deposit",
-		"amount":   deposit.Amount,
-		"currency": deposit.Currency,
+	req := struct {
+		Type     string  `json:"type"`
+		Amount   float64 `json:"amount"`
+		Currency string  `json:"currency"`
+	}{
+		Type:     "deposit",
+		Amount:   deposit.Amount,
+		Currency: deposit.Currency,
 	}
-	_, err := g.SendWithRetry(ctx, request)
+	_, err := g.SendWithRetry(ctx, req)
 	if err != nil {
 		return models.DepositResponse{}, fmt.Errorf("error sending deposit request: %w", err)
 	}

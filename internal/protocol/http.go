@@ -3,6 +3,7 @@ package protocol
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -25,20 +26,28 @@ func NewHTTPConnection(client *http.Client, method, url string) *HTTPProtocol {
 func (h *HTTPProtocol) Send(ctx context.Context, data []byte) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, h.Method, h.URL, bytes.NewBuffer(data))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
 	resp, err := h.Client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send HTTP request: %w", err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			slog.ErrorContext(ctx, "Failed to close response body", err)
-			return
+			slog.ErrorContext(ctx, "Failed to close response body", "error", err)
 		}
 	}(resp.Body)
 
-	return io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("unexpected HTTP status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read HTTP response body: %w", err)
+	}
+
+	return body, nil
 }
