@@ -12,9 +12,8 @@ import (
 func (a *Application) SetupRoutes() (*http.ServeMux, error) {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /api/v1/deposit", makeHandler(a.PaymentHandler.HandleDeposit))
-	mux.HandleFunc("POST /api/v1/withdrawal", makeHandler(a.PaymentHandler.HandleWithdrawal))
-	mux.HandleFunc("POST /api/v1/status", makeHandler(a.PaymentHandler.HandleUpdateStatus))
+	mux.HandleFunc("POST /api/v1/transact", makeHandler(a.PaymentHandler.HandleTransaction))
+	mux.HandleFunc("POST /api/v1/transaction/status", makeHandler(a.PaymentHandler.HandleUpdateStatus))
 
 	return mux, nil
 }

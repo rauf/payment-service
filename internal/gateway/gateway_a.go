@@ -4,56 +4,41 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/rauf/payment-service/internal/backoff"
-	"github.com/rauf/payment-service/internal/config"
 	"github.com/rauf/payment-service/internal/format"
 	"github.com/rauf/payment-service/internal/models"
 	"github.com/rauf/payment-service/internal/protocol"
-	"github.com/rauf/payment-service/internal/utils/randutil"
 )
 
 type GatewayA struct {
 	baseGateway[gatewayARequest, gatewayAResponse]
 }
 
-func NewGatewayA(address string) *GatewayA {
-	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
-	}
+func NewGatewayA(name, method, address string, httpClient *http.Client, retryConfig backoff.RetryConfig) *GatewayA {
 	return &GatewayA{
 		baseGateway: newBaseGateway[gatewayARequest, gatewayAResponse](
-			"Gateway-A",
+			name,
 			format.NewJSONProtocol(),
-			protocol.NewHTTPConnectionMock(httpClient, http.MethodPost, address),
-			config.RetryConfig{
-				MaxRetries: 3,
-				Backoff:    backoff.NewExponentialBackoff(1*time.Second, 1.2, 2*time.Second),
-			},
+			protocol.NewHTTPConnectionMock(httpClient, method, address),
+			retryConfig,
 		),
 	}
 }
 
-func (g *GatewayA) Deposit(ctx context.Context, deposit models.DepositRequest) (models.DepositResponse, error) {
+func (g *GatewayA) Transact(ctx context.Context, transaction models.TransactionRequest) (models.TransactionResponse, error) {
 	req := gatewayARequest{
-		Amount:   deposit.Amount,
-		Currency: deposit.Currency,
+		Amount:   transaction.Amount,
+		Currency: transaction.Currency,
 	}
 	res, err := g.SendWithRetry(ctx, req)
 	if err != nil {
-		return models.DepositResponse{}, fmt.Errorf("error sending deposit request: %w", err)
+		return models.TransactionResponse{}, fmt.Errorf("error sending transaction request: %w", err)
 	}
 
-	return models.DepositResponse{
-		TransactionID: res.TransactionID,
-		Status:        res.Status,
-		CreatedAt:     res.CreatedAt,
-	}, nil
-}
-
-func (g *GatewayA) Withdraw(ctx context.Context, withdrawal models.WithdrawalRequest) (models.WithdrawalResponse, error) {
-	return models.WithdrawalResponse{
-		TransactionID: randutil.RandomString(10),
+	return models.TransactionResponse{
+		RefID:     res.RefID,
+		Status:    res.Status,
+		CreatedAt: res.CreatedAt,
 	}, nil
 }

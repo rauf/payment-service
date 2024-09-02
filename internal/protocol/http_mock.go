@@ -25,13 +25,13 @@ func NewHTTPConnectionMock(client *http.Client, method, url string) *HTTPProtoco
 
 func (h *HTTPProtocolMock) Send(_ context.Context, _ []byte) ([]byte, error) {
 	res := struct {
-		TransactionID string    `json:"transaction_id"`
-		Status        string    `json:"status"`
-		CreatedAt     time.Time `json:"created_at"`
+		RefID     string    `json:"ref_id"`
+		Status    string    `json:"status"`
+		CreatedAt time.Time `json:"created_at"`
 	}{
-		TransactionID: randutil.RandomString(10),
-		Status:        "pending",
-		CreatedAt:     time.Now(),
+		RefID:     randutil.RandomString(20),
+		Status:    "pending",
+		CreatedAt: time.Now(),
 	}
 	return json.Marshal(res)
 }

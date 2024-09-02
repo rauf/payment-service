@@ -13,6 +13,5 @@ var (
 
 type PaymentGateway interface {
 	Name() string
-	Deposit(context.Context, models.DepositRequest) (models.DepositResponse, error)
-	Withdraw(context.Context, models.WithdrawalRequest) (models.WithdrawalResponse, error)
+	Transact(context.Context, models.TransactionRequest) (models.TransactionResponse, error)
 }

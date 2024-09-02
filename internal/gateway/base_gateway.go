@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/rauf/payment-service/internal/config"
+	"github.com/rauf/payment-service/internal/backoff"
 	"github.com/rauf/payment-service/internal/format"
 	"github.com/rauf/payment-service/internal/protocol"
 )
@@ -16,14 +16,14 @@ type baseGateway[Req, Res any] struct {
 	name            string
 	dataFormat      format.DataFormat
 	protocolHandler protocol.Handler
-	retryConfig     config.RetryConfig
+	retryConfig     backoff.RetryConfig
 }
 
 func newBaseGateway[Req, Res any](
 	name string,
 	dataFormat format.DataFormat,
 	protocolHandler protocol.Handler,
-	retryConfig config.RetryConfig,
+	retryConfig backoff.RetryConfig,
 ) baseGateway[Req, Res] {
 	return baseGateway[Req, Res]{
 		name:            name,

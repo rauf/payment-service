@@ -8,9 +8,9 @@ type gatewayARequest struct {
 }
 
 type gatewayAResponse struct {
-	TransactionID string    `json:"transaction_id"`
-	Status        string    `json:"status"`
-	CreatedAt     time.Time `json:"created_at"`
+	RefID     string    `json:"ref_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type gatewayBRequest struct {
@@ -19,7 +19,7 @@ type gatewayBRequest struct {
 }
 
 type gatewayBResponse struct {
-	TransactionID string    `json:"transaction_id"`
-	Status        string    `json:"status"`
-	CreatedAt     time.Time `json:"created_at"`
+	RefID     string    `json:"ref_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
 }
