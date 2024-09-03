@@ -69,19 +69,3 @@ func connectionString(config Config) string {
 		return ""
 	}
 }
-
-//func (db *Database) RunMigrationUpCommand(ctx context.Context) error {
-//	if err := goose.SetDialect(db.config.Driver); err != nil {
-//		return fmt.Errorf("failed to set the dialect: %w", err)
-//	}
-//
-//	if err := db.Ping(); err != nil {
-//		return fmt.Errorf("error pinging db: %w", err)
-//	}
-//
-//	if err := goose.RunContext(ctx, "up", db.DB, "./migrations"); err != nil {
-//		return fmt.Errorf("failed to run goose command: %w", err)
-//	}
-//
-//	return nil
-//}

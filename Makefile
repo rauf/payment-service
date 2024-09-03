@@ -15,6 +15,10 @@ build:
 run:
 	@go run ./cmd/api
 
+.PHONY: test
+test:
+	@go test -v ./...
+
 .PHONY: docker-compose/up
 docker-compose/up:
 	@docker compose up -d

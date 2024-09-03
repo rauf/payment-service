@@ -80,6 +80,10 @@ func (r *Registry[T]) SetOrder(order []string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	if len(order) != len(r.order) {
+		return errors.New("order length does not match registry length")
+	}
+
 	for _, name := range order {
 		if _, exists := r.registry[name]; !exists {
 			return errors.New("invalid element in order: " + name)
@@ -112,7 +116,7 @@ func (r *Registry[T]) ListWithPreference(preferred string) ([]T, error) {
 	}
 
 	if preferredIndex == -1 {
-		return nil, errors.New("preferred value not found")
+		return r.List(), nil
 	}
 
 	ordered := make([]T, 0, len(r.registry))

@@ -33,13 +33,13 @@ func newBaseGateway[Req, Res any](
 	}
 }
 
-func (g *baseGateway[Req, Res]) SendWithRetry(ctx context.Context, data Req) (Res, error) {
+func (g *baseGateway[Req, Res]) sendWithRetry(ctx context.Context, data Req) (Res, error) {
 	var zero Res
 	var err error
 
 	for attempt := 0; attempt <= g.retryConfig.MaxRetries; attempt++ {
 		var response Res
-		response, err = g.Send(ctx, data)
+		response, err = g.send(ctx, data)
 		if err == nil {
 			return response, nil
 		}
@@ -62,7 +62,7 @@ func (g *baseGateway[Req, Res]) SendWithRetry(ctx context.Context, data Req) (Re
 	return zero, fmt.Errorf("all retries failed, last error: %w", err)
 }
 
-func (g *baseGateway[Req, Res]) Send(ctx context.Context, data Req) (Res, error) {
+func (g *baseGateway[Req, Res]) send(ctx context.Context, data Req) (Res, error) {
 	var zero Res
 	if g.dataFormat == nil {
 		return zero, fmt.Errorf("data format is not initialized")

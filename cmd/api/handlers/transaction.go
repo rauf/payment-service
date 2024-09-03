@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -12,10 +13,16 @@ import (
 )
 
 type PaymentHandler struct {
-	paymentService *service.PaymentService
+	paymentService paymentService
 }
 
-func NewPaymentHandler(paymentService *service.PaymentService) *PaymentHandler {
+// interface on consumer side
+type paymentService interface {
+	CreateTransaction(ctx context.Context, req models.TransactionRequest) (models.TransactionResponse, error)
+	UpdateStatus(ctx context.Context, req models.UpdateStatusRequest) error
+}
+
+func NewPaymentHandler(paymentService paymentService) *PaymentHandler {
 	return &PaymentHandler{
 		paymentService: paymentService,
 	}

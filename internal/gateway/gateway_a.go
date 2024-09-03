@@ -31,7 +31,7 @@ func (g *GatewayA) Transact(ctx context.Context, transaction models.TransactionR
 		Amount:   transaction.Amount,
 		Currency: transaction.Currency,
 	}
-	res, err := g.SendWithRetry(ctx, req)
+	res, err := g.sendWithRetry(ctx, req)
 	if err != nil {
 		return models.TransactionResponse{}, fmt.Errorf("error sending transaction request: %w", err)
 	}
