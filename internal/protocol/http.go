@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// HTTPProtocol is a protocol handler for HTTP connections.
 type HTTPProtocol struct {
 	Client *http.Client
 	URL    string

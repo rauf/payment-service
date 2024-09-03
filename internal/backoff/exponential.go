@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// ExponentialBackoff is a backoff strategy that increases the backoff interval exponentially.
 type ExponentialBackoff struct {
 	InitialInterval time.Duration
 	Multiplier      float64

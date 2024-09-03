@@ -8,6 +8,7 @@ import (
 	"net"
 )
 
+// TCPProtocol is a protocol handler for TCP connections.
 type TCPProtocol struct {
 	Address string
 }

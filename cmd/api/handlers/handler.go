@@ -7,6 +7,7 @@ import (
 	"github.com/rauf/payment-service/internal/utils/jsonutil"
 )
 
+// MakeHandler handles the writing of the response and status code to the client.
 func MakeHandler(fn func(w http.ResponseWriter, r *http.Request) Response) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res := fn(w, r)
@@ -25,6 +26,7 @@ func writeResponse(w http.ResponseWriter, r *http.Request, res Response) {
 	}
 }
 
+// handleError handles the error response.
 func handleError(w http.ResponseWriter, r *http.Request, res Response) {
 	if res.Err != nil {
 		if err := jsonutil.WriteJSON(w, res.Code, res); err != nil {

@@ -14,12 +14,12 @@ type gatewayAResponse struct {
 }
 
 type gatewayBRequest struct {
-	Amount   float64 `json:"amount"`
-	Currency string  `json:"currency"`
+	Amount   float64 `xml:"amount"`
+	Currency string  `xml:"currency"`
 }
 
 type gatewayBResponse struct {
-	RefID     string    `json:"ref_id"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	RefID     string    `xml:"ref_id"`
+	Status    string    `xml:"status"`
+	CreatedAt time.Time `xml:"created_at"`
 }

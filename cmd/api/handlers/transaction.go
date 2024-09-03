@@ -6,14 +6,19 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/rauf/payment-service/internal/consts"
 	"github.com/rauf/payment-service/internal/gateway"
 	"github.com/rauf/payment-service/internal/models"
+	"github.com/rauf/payment-service/internal/serde"
 	"github.com/rauf/payment-service/internal/service"
 	"github.com/rauf/payment-service/internal/utils/jsonutil"
 )
 
+// PaymentHandler is a struct that handles payment transactions
 type PaymentHandler struct {
 	paymentService paymentService
+	jsonSerde      serde.Serde
+	xmlSerde       serde.Serde
 }
 
 // interface on consumer side
@@ -25,14 +30,16 @@ type paymentService interface {
 func NewPaymentHandler(paymentService paymentService) *PaymentHandler {
 	return &PaymentHandler{
 		paymentService: paymentService,
+		jsonSerde:      serde.NewJSONSerde(),
+		xmlSerde:       serde.NewXMLSerde(),
 	}
 }
 
-func (h *PaymentHandler) HandleTransaction(w http.ResponseWriter, r *http.Request) Response {
+func (h *PaymentHandler) HandleTransaction(_ http.ResponseWriter, r *http.Request) Response {
 	slog.InfoContext(r.Context(), "Transaction request received", "method", r.Method, "url", r.URL.Path)
 
 	var apiRequest transactionApiRequest
-	if err := jsonutil.ReadJSON(r, &apiRequest); err != nil {
+	if err := h.jsonSerde.Deserialize(r.Body, &apiRequest); err != nil {
 		return NewResponse(http.StatusBadRequest, "failed to decode request", nil, err)
 	}
 	if validationErrs := apiRequest.validate(); !validationErrs.IsValid() {
@@ -66,7 +73,7 @@ func (h *PaymentHandler) HandleTransaction(w http.ResponseWriter, r *http.Reques
 	return NewResponse(http.StatusOK, "transaction sent to gateway successfully", apiResponse, nil)
 }
 
-func (h *PaymentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request) Response {
+func (h *PaymentHandler) HandleUpdateStatus(_ http.ResponseWriter, r *http.Request) Response {
 	slog.InfoContext(r.Context(), "Callback request received", "method", r.Method, "url", r.URL.Path)
 
 	var apiRequest updateStatusApiRequest
@@ -79,6 +86,61 @@ func (h *PaymentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Reque
 
 	req := models.UpdateStatusRequest{
 		Gateway: apiRequest.Gateway,
+		RefID:   apiRequest.RefID,
+		Status:  apiRequest.Status,
+	}
+
+	err := h.paymentService.UpdateStatus(r.Context(), req)
+	if err != nil {
+		if errors.Is(err, service.ErrTransactionNotFound) {
+			return NewResponse(http.StatusNotFound, "transaction not found", nil, err)
+		}
+		return NewResponse(http.StatusInternalServerError, "failed to process update status", nil, err)
+	}
+	return NewResponse(http.StatusOK, "status updated successfully", nil, nil)
+}
+
+func (h *PaymentHandler) HandleGatewayACallback(_ http.ResponseWriter, r *http.Request) Response {
+	slog.InfoContext(r.Context(), "Gateway A callback request received", "method", r.Method, "url", r.URL.Path)
+
+	var apiRequest gatewayACallbackRequest
+	if err := jsonutil.ReadJSON(r, &apiRequest); err != nil {
+		return NewResponse(http.StatusBadRequest, "failed to decode request", nil, err)
+	}
+	if validationErrs := apiRequest.validate(); !validationErrs.IsValid() {
+		return NewResponse(http.StatusBadRequest, "failed to validate request", validationErrs, &validationErrs)
+	}
+
+	req := models.UpdateStatusRequest{
+		Gateway: consts.GatewayA,
+		RefID:   apiRequest.RefID,
+		Status:  apiRequest.Status,
+	}
+
+	err := h.paymentService.UpdateStatus(r.Context(), req)
+	if err != nil {
+		if errors.Is(err, service.ErrTransactionNotFound) {
+			return NewResponse(http.StatusNotFound, "transaction not found", nil, err)
+		}
+		return NewResponse(http.StatusInternalServerError, "failed to process update status", nil, err)
+	}
+	return NewResponse(http.StatusOK, "status updated successfully", nil, nil)
+}
+
+func (h *PaymentHandler) HandleGatewayBCallback(_ http.ResponseWriter, r *http.Request) Response {
+	slog.InfoContext(r.Context(), "Gateway B callback request received", "method", r.Method, "url", r.URL.Path)
+
+	var apiRequest gatewayBCallbackRequest
+	//var xmlSerializer serde.XMLSerde
+	if err := jsonutil.ReadJSON(r, &apiRequest); err != nil {
+		return NewResponse(http.StatusBadRequest, "failed to decode request", nil, err)
+	}
+	if validationErrs := apiRequest.validate(); !validationErrs.IsValid() {
+		return NewResponse(http.StatusBadRequest, "failed to validate request", validationErrs, &validationErrs)
+	}
+
+	req := models.UpdateStatusRequest{
+		Gateway: consts.GatewayB,
 		RefID:   apiRequest.RefID,
 		Status:  apiRequest.Status,
 	}

@@ -21,6 +21,9 @@ var (
 )
 
 type (
+	validate interface {
+		validate() validation.Errors
+	}
 	transactionApiRequest struct {
 		Amount           float64         `json:"amount"`
 		Type             string          `json:"type"`
@@ -41,6 +44,16 @@ type (
 		Gateway string `json:"gateway"`
 		RefID   string `json:"ref_id"`
 		Status  string `json:"status"`
+	}
+	gatewayACallbackRequest struct {
+		RefID     string    `json:"ref_id"`
+		Status    string    `json:"status"`
+		CreatedAt time.Time `json:"created_at"`
+	}
+	gatewayBCallbackRequest struct {
+		RefID     string    `xml:"ref_id"`
+		Status    string    `xml:"status"`
+		CreatedAt time.Time `xml:"created_at"`
 	}
 )
 
@@ -77,6 +90,32 @@ func (c *updateStatusApiRequest) validate() validation.Errors {
 	if c.Status == "" {
 		errors.Add("status", "cannot be empty")
 	} else if _, ok := allowedTransactionStatuses[strings.ToLower(c.Status)]; !ok {
+		errors.Add("status", "not valid transaction status")
+	}
+	return errors
+}
+
+func (r gatewayACallbackRequest) validate() validation.Errors {
+	var errors validation.Errors
+	if r.RefID == "" {
+		errors.Add("ref_id", "cannot be empty")
+	}
+	if r.Status == "" {
+		errors.Add("status", "cannot be empty")
+	} else if _, ok := allowedTransactionStatuses[strings.ToLower(r.Status)]; !ok {
+		errors.Add("status", "not valid transaction status")
+	}
+	return errors
+}
+
+func (r gatewayBCallbackRequest) validate() validation.Errors {
+	var errors validation.Errors
+	if r.RefID == "" {
+		errors.Add("ref_id", "cannot be empty")
+	}
+	if r.Status == "" {
+		errors.Add("status", "cannot be empty")
+	} else if _, ok := allowedTransactionStatuses[strings.ToLower(r.Status)]; !ok {
 		errors.Add("status", "not valid transaction status")
 	}
 	return errors

@@ -8,6 +8,7 @@ import (
 	"github.com/rauf/payment-service/cmd/api/handlers"
 	"github.com/rauf/payment-service/internal/backoff"
 	"github.com/rauf/payment-service/internal/config"
+	"github.com/rauf/payment-service/internal/consts"
 	"github.com/rauf/payment-service/internal/database"
 	"github.com/rauf/payment-service/internal/gateway"
 	"github.com/rauf/payment-service/internal/models"
@@ -18,6 +19,7 @@ import (
 	"github.com/sony/gobreaker/v2"
 )
 
+// Application is the main application struct that holds the dependencies.
 type Application struct {
 	Registry       *registry.Registry[gateway.PaymentGateway]
 	PaymentHandler *handlers.PaymentHandler
@@ -30,6 +32,7 @@ func NewApplication(regis *registry.Registry[gateway.PaymentGateway], ph *handle
 	}
 }
 
+// setupApplication creates a new application instance with the required dependencies.
 func setupApplication() (*Application, error) {
 	settings := gobreaker.Settings{ // TODO: take input from config
 		MaxRequests: 1,
@@ -62,8 +65,8 @@ func createGatewayRegistry() (*registry.Registry[gateway.PaymentGateway], error)
 		Timeout: 10 * time.Second, // specify the timeout for the http client, should be configurable
 	}
 
-	err := gatewayRegistry.Register("Gateway-A", gateway.NewGatewayA( // TODO: these should be configurable and read from env variable
-		"Gateway-A",
+	err := gatewayRegistry.Register(consts.GatewayA, gateway.NewGatewayA( // TODO: these should be configurable and read from env variable
+		consts.GatewayA,
 		http.MethodPost,
 		"http: //gateway-a.com",
 		httpClient,
@@ -74,8 +77,8 @@ func createGatewayRegistry() (*registry.Registry[gateway.PaymentGateway], error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to register Gateway-A: %w", err)
 	}
-	err = gatewayRegistry.Register("Gateway-B", gateway.NewGatewayB(
-		"Gateway-B",
+	err = gatewayRegistry.Register(consts.GatewayB, gateway.NewGatewayB(
+		consts.GatewayB,
 		http.MethodPost,
 		"http://gateway-b.com",
 		httpClient,

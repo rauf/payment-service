@@ -1,5 +1,6 @@
 package handlers
 
+// Response is a struct that defines the response format. It will be returned by the handlers.
 type Response struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`

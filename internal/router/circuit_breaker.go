@@ -10,6 +10,7 @@ import (
 	"github.com/sony/gobreaker/v2"
 )
 
+// circuitBreakers is a registry of circuit breakers for all the payment gateways
 type circuitBreakers struct {
 	circuitBreakers *registry.Registry[*gobreaker.TwoStepCircuitBreaker[gateway.PaymentGateway]]
 	settings        gobreaker.Settings

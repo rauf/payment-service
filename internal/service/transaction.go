@@ -15,6 +15,7 @@ import (
 
 var ErrTransactionNotFound = errors.New("transaction not found")
 
+// PaymentService is a service that handles payment transactions
 type PaymentService struct {
 	router      *router.Router
 	paymentRepo *repo.PaymentRepo

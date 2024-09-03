@@ -12,6 +12,8 @@ import (
 	"github.com/sony/gobreaker/v2"
 )
 
+// Router is a struct that routes the request to the available gateways
+// It has a registry of all available gateways and uses circuit breakers to prevent cascading failures.
 type Router struct {
 	*circuitBreakers
 	registry *registry.Registry[gateway.PaymentGateway]

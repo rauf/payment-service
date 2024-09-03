@@ -9,6 +9,7 @@ import (
 	"github.com/rauf/payment-service/internal/utils/randutil"
 )
 
+// HTTPProtocolMock is a mock implementation of the HTTP protocol. To be used for testing purposes
 type HTTPProtocolMock struct {
 	Client *http.Client
 	URL    string

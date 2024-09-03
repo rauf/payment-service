@@ -6,11 +6,12 @@ import (
 	"net/http"
 
 	"github.com/rauf/payment-service/internal/backoff"
-	"github.com/rauf/payment-service/internal/format"
 	"github.com/rauf/payment-service/internal/models"
 	"github.com/rauf/payment-service/internal/protocol"
+	"github.com/rauf/payment-service/internal/serde"
 )
 
+// GatewayA is the gateway for service A. It uses HTTP protocol with JSON serde
 type GatewayA struct {
 	baseGateway[gatewayARequest, gatewayAResponse]
 }
@@ -19,7 +20,7 @@ func NewGatewayA(name, method, address string, httpClient *http.Client, retryCon
 	return &GatewayA{
 		baseGateway: newBaseGateway[gatewayARequest, gatewayAResponse](
 			name,
-			format.NewJSONProtocol(),
+			serde.NewJSONSerde(),
 			protocol.NewHTTPConnectionMock(httpClient, method, address),
 			retryConfig,
 		),

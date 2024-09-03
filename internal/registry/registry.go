@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// Registry is a generic registry that stores values by name and also stores the order of registration.
 type Registry[T any] struct {
 	registry map[string]T
 	order    []string

@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -8,26 +9,27 @@ import (
 	"time"
 
 	"github.com/rauf/payment-service/internal/backoff"
-	"github.com/rauf/payment-service/internal/format"
 	"github.com/rauf/payment-service/internal/protocol"
+	"github.com/rauf/payment-service/internal/serde"
 )
 
+// baseGateway is the base struct for all gateways.
 type baseGateway[Req, Res any] struct {
 	name            string
-	dataFormat      format.DataFormat
+	serde           serde.Serde
 	protocolHandler protocol.Handler
 	retryConfig     backoff.RetryConfig
 }
 
 func newBaseGateway[Req, Res any](
 	name string,
-	dataFormat format.DataFormat,
+	serde serde.Serde,
 	protocolHandler protocol.Handler,
 	retryConfig backoff.RetryConfig,
 ) baseGateway[Req, Res] {
 	return baseGateway[Req, Res]{
 		name:            name,
-		dataFormat:      dataFormat,
+		serde:           serde,
 		protocolHandler: protocolHandler,
 		retryConfig:     retryConfig,
 	}
@@ -64,18 +66,19 @@ func (g *baseGateway[Req, Res]) sendWithRetry(ctx context.Context, data Req) (Re
 
 func (g *baseGateway[Req, Res]) send(ctx context.Context, data Req) (Res, error) {
 	var zero Res
-	if g.dataFormat == nil {
+	if g.serde == nil {
 		return zero, fmt.Errorf("data format is not initialized")
 	}
 	if g.protocolHandler == nil {
 		return zero, fmt.Errorf("protocol handler is not initialized")
 	}
-	encoded, err := g.dataFormat.Marshal(data)
+	var buf bytes.Buffer
+	err := g.serde.Serialize(&buf, data)
 	if err != nil {
 		return zero, fmt.Errorf("error marshaling data: %w", err)
 	}
 
-	response, err := g.protocolHandler.Send(ctx, encoded)
+	response, err := g.protocolHandler.Send(ctx, buf.Bytes())
 	if err != nil {
 		return zero, fmt.Errorf("error sending data: %w", err)
 	}
@@ -84,7 +87,7 @@ func (g *baseGateway[Req, Res]) send(ctx context.Context, data Req) (Res, error)
 	}
 
 	var result Res
-	if err := g.dataFormat.Unmarshal(response, &result); err != nil {
+	if err := g.serde.Deserialize(bytes.NewReader(response), &result); err != nil {
 		return zero, fmt.Errorf("error unmarshaling response: %w", err)
 	}
 
