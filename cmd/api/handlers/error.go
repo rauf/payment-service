@@ -7,15 +7,11 @@ type Response struct {
 	Err     error  `json:"-"`
 }
 
-func NewResponse(code int, message string, data any, err error) *Response {
-	return &Response{
+func NewResponse(code int, message string, data any, err error) Response {
+	return Response{
 		Code:    code,
 		Message: message,
 		Data:    data,
 		Err:     err,
 	}
-}
-
-func (e *Response) Error() string {
-	return e.Message
 }

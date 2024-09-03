@@ -21,7 +21,7 @@ func NewPaymentHandler(paymentService *service.PaymentService) *PaymentHandler {
 	}
 }
 
-func (h *PaymentHandler) HandleTransaction(w http.ResponseWriter, r *http.Request) error {
+func (h *PaymentHandler) HandleTransaction(w http.ResponseWriter, r *http.Request) Response {
 	slog.InfoContext(r.Context(), "Transaction request received", "method", r.Method, "url", r.URL.Path)
 
 	var apiRequest transactionApiRequest
@@ -59,7 +59,7 @@ func (h *PaymentHandler) HandleTransaction(w http.ResponseWriter, r *http.Reques
 	return NewResponse(http.StatusOK, "transaction sent to gateway successfully", apiResponse, nil)
 }
 
-func (h *PaymentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request) error {
+func (h *PaymentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request) Response {
 	slog.InfoContext(r.Context(), "Callback request received", "method", r.Method, "url", r.URL.Path)
 
 	var apiRequest updateStatusApiRequest

@@ -8,15 +8,22 @@ import (
 
 	"github.com/rauf/payment-service/internal/gateway"
 	"github.com/rauf/payment-service/internal/models"
+	"github.com/rauf/payment-service/internal/registry"
+	"github.com/sony/gobreaker/v2"
 )
 
 type Router struct {
-	registry *gateway.Registry
+	*circuitBreakers
+	registry *registry.Registry[gateway.PaymentGateway]
 }
 
-func NewRouter(registry *gateway.Registry) *Router {
+func NewRouter(
+	registry *registry.Registry[gateway.PaymentGateway],
+	settings gobreaker.Settings,
+) *Router {
 	return &Router{
-		registry: registry,
+		registry:        registry,
+		circuitBreakers: newCircuitBreakers(settings),
 	}
 }
 
@@ -32,15 +39,24 @@ func (r *Router) SendMessage(ctx context.Context, preferredGateway string, opera
 	}
 
 	for _, g := range allGateways {
-		var result models.TransactionResponse
+		done, cbErr := r.isRequestAllowed(ctx, g.Name())
+		if cbErr != nil {
+			continue
+		}
+
 		slog.InfoContext(ctx, "Sending request to gateway", "gateway", g.Name())
+
+		var result models.TransactionResponse
 		result, err = operation(g)
 		if err == nil {
+			done(true)
 			return Response{
 				Gateway: g.Name(),
 				Data:    result,
 			}, nil
 		}
+
+		done(false)
 		if errors.Is(err, gateway.ErrGatewayUnavailable) {
 			continue
 		}

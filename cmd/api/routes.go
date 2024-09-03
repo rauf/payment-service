@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 
@@ -18,37 +17,33 @@ func (a *Application) SetupRoutes() (*http.ServeMux, error) {
 	return mux, nil
 }
 
-func makeHandler(fn func(w http.ResponseWriter, r *http.Request) error) http.HandlerFunc {
+func makeHandler(fn func(w http.ResponseWriter, r *http.Request) handlers.Response) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := fn(w, r)
-		if err != nil {
-			slog.ErrorContext(r.Context(), "error while processing request", "error", err)
-			handleError(w, r, err)
+		res := fn(w, r)
+		if res.Err != nil {
+			slog.ErrorContext(r.Context(), "error while processing request", "error", res.Err)
+			handleError(w, r, res)
 			return
 		}
-		var apiRes *handlers.Response
-		if errors.As(err, &apiRes) {
-			if err := jsonutil.WriteJSON(w, http.StatusOK, apiRes.Data); err != nil {
-				slog.Error("failed to encode response", "error", err)
-			}
+		if err := jsonutil.WriteJSON(w, http.StatusOK, res); err != nil {
+			slog.Error("failed to encode response", "error", err)
 		}
 	}
 }
-func handleError(w http.ResponseWriter, r *http.Request, err error) {
-	var apiRes *handlers.Response
-	if errors.As(err, &apiRes) {
-		slog.ErrorContext(r.Context(), "error while processing request", "error", err, "internal_error", apiRes.Err)
-		if err := jsonutil.WriteJSON(w, apiRes.Code, apiRes); err != nil {
+func handleError(w http.ResponseWriter, r *http.Request, res handlers.Response) {
+	if res.Err != nil {
+		if err := jsonutil.WriteJSON(w, res.Code, res); err != nil {
+			slog.ErrorContext(r.Context(), "error while processing request", "error", err, "internal_error", res.Err)
 			slog.Error("failed to encode error response", "error", err)
 		}
 		return
 	}
-	res := &handlers.Response{
+	internalErrResponse := &handlers.Response{
 		Code:    http.StatusInternalServerError,
 		Message: "Internal Server Error",
 	}
 
-	if err := jsonutil.WriteJSON(w, http.StatusInternalServerError, res); err != nil {
+	if err := jsonutil.WriteJSON(w, http.StatusInternalServerError, internalErrResponse); err != nil {
 		slog.Error("failed to encode error response", "error", err)
 	}
 }
