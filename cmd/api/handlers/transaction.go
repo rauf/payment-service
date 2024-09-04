@@ -11,7 +11,6 @@ import (
 	"github.com/rauf/payment-service/internal/models"
 	"github.com/rauf/payment-service/internal/serde"
 	"github.com/rauf/payment-service/internal/service"
-	"github.com/rauf/payment-service/internal/utils/jsonutil"
 )
 
 // PaymentHandler is a struct that handles payment transactions
@@ -35,7 +34,7 @@ func NewPaymentHandler(paymentService paymentService) *PaymentHandler {
 	}
 }
 
-func (h *PaymentHandler) HandleTransaction(_ http.ResponseWriter, r *http.Request) Response {
+func (h *PaymentHandler) HandleCreateTransaction(_ http.ResponseWriter, r *http.Request) Response {
 	slog.InfoContext(r.Context(), "Transaction request received", "method", r.Method, "url", r.URL.Path)
 
 	var apiRequest transactionApiRequest
@@ -76,8 +75,13 @@ func (h *PaymentHandler) HandleTransaction(_ http.ResponseWriter, r *http.Reques
 func (h *PaymentHandler) HandleUpdateStatus(_ http.ResponseWriter, r *http.Request) Response {
 	slog.InfoContext(r.Context(), "Callback request received", "method", r.Method, "url", r.URL.Path)
 
+	transactionRefID := r.PathValue("id")
+	if transactionRefID == "" {
+		return NewResponse(http.StatusBadRequest, "missing transaction ID", nil, nil)
+	}
+
 	var apiRequest updateStatusApiRequest
-	if err := jsonutil.ReadJSON(r, &apiRequest); err != nil {
+	if err := h.jsonSerde.Deserialize(r.Body, &apiRequest); err != nil {
 		return NewResponse(http.StatusBadRequest, "failed to decode request", nil, err)
 	}
 	if validationErrs := apiRequest.validate(); !validationErrs.IsValid() {
@@ -86,7 +90,7 @@ func (h *PaymentHandler) HandleUpdateStatus(_ http.ResponseWriter, r *http.Reque
 
 	req := models.UpdateStatusRequest{
 		Gateway: apiRequest.Gateway,
-		RefID:   apiRequest.RefID,
+		RefID:   transactionRefID,
 		Status:  apiRequest.Status,
 	}
 
@@ -104,7 +108,7 @@ func (h *PaymentHandler) HandleGatewayACallback(_ http.ResponseWriter, r *http.R
 	slog.InfoContext(r.Context(), "Gateway A callback request received", "method", r.Method, "url", r.URL.Path)
 
 	var apiRequest gatewayACallbackRequest
-	if err := jsonutil.ReadJSON(r, &apiRequest); err != nil {
+	if err := h.jsonSerde.Deserialize(r.Body, &apiRequest); err != nil {
 		return NewResponse(http.StatusBadRequest, "failed to decode request", nil, err)
 	}
 	if validationErrs := apiRequest.validate(); !validationErrs.IsValid() {
@@ -131,9 +135,8 @@ func (h *PaymentHandler) HandleGatewayBCallback(_ http.ResponseWriter, r *http.R
 	slog.InfoContext(r.Context(), "Gateway B callback request received", "method", r.Method, "url", r.URL.Path)
 
 	var apiRequest gatewayBCallbackRequest
-	//var xmlSerializer serde.XMLSerde
-	if err := jsonutil.ReadJSON(r, &apiRequest); err != nil {
-		return NewResponse(http.StatusBadRequest, "failed to decode request", nil, err)
+	if err := h.xmlSerde.Deserialize(r.Body, &apiRequest); err != nil {
+		return NewResponse(http.StatusBadRequest, "failed to decode XML request", nil, err)
 	}
 	if validationErrs := apiRequest.validate(); !validationErrs.IsValid() {
 		return NewResponse(http.StatusBadRequest, "failed to validate request", validationErrs, &validationErrs)

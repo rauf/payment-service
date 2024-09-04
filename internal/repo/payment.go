@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/rauf/payment-service/internal/models"
 	"github.com/rauf/payment-service/internal/utils/nullutil"
@@ -49,6 +50,7 @@ func (r *PaymentRepo) UpdateTransactionStatus(ctx context.Context, update Update
 		Gateway:      update.Gateway,
 		GatewayRefID: update.RefID,
 		Status:       models.TransactionStatus(strings.ToUpper(update.Status)),
+		UpdatedAt:    time.Now().UTC(),
 	}
 
 	return r.queries.UpdateTransactionStatus(ctx, arg)

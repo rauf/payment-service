@@ -21,7 +21,7 @@ func NewGatewayA(name, method, address string, httpClient *http.Client, retryCon
 		baseGateway: newBaseGateway[gatewayARequest, gatewayAResponse](
 			name,
 			serde.NewJSONSerde(),
-			protocol.NewHTTPConnectionMock(httpClient, method, address),
+			protocol.NewHTTPConnectionMock(httpClient, method, address, "json"),
 			retryConfig,
 		),
 	}

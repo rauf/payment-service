@@ -98,7 +98,7 @@ func TestHandleTransaction(t *testing.T) {
 			req, _ := http.NewRequest("POST", "/transaction", bytes.NewBuffer(body))
 			rr := httptest.NewRecorder()
 
-			res := handler.HandleTransaction(rr, req)
+			res := handler.HandleCreateTransaction(rr, req)
 			writeResponse(rr, req, res)
 
 			assert.Equal(t, tt.expectedStatus, res.Code)
@@ -113,6 +113,7 @@ func TestHandleUpdateStatus(t *testing.T) {
 
 	tests := []struct {
 		name             string
+		transactionRefID string
 		input            updateStatusApiRequest
 		mockError        error
 		callUpdateMethod bool
@@ -120,10 +121,10 @@ func TestHandleUpdateStatus(t *testing.T) {
 		expectedBody     string
 	}{
 		{
-			name: "Successful status update",
+			name:             "Successful status update",
+			transactionRefID: "ref123",
 			input: updateStatusApiRequest{
 				Gateway: "stripe",
-				RefID:   "ref123",
 				Status:  "success",
 			},
 			mockError:        nil,
@@ -132,22 +133,22 @@ func TestHandleUpdateStatus(t *testing.T) {
 			expectedBody:     `{"code":200,"message":"status updated successfully"}`,
 		},
 		{
-			name: "Invalid request",
+			name:             "Invalid request",
+			transactionRefID: "ref123",
 			input: updateStatusApiRequest{
 				Gateway: "",
-				RefID:   "",
 				Status:  "invalid",
 			},
 			mockError:        nil,
 			callUpdateMethod: false,
 			expectedStatus:   http.StatusBadRequest,
-			expectedBody:     `{"code":400,"message":"failed to validate request","data":{"errors":[{"field":"ref_id","message":"cannot be empty"},{"field":"gateway","message":"cannot be empty"},{"field":"status","message":"not valid transaction status"}]}}`,
+			expectedBody:     `{"code":400,"message":"failed to validate request","data":{"errors":[{"field":"gateway","message":"cannot be empty"},{"field":"status","message":"not valid transaction status"}]}}`,
 		},
 		{
-			name: "Transaction not found",
+			name:             "Transaction not found",
+			transactionRefID: "ref123",
 			input: updateStatusApiRequest{
 				Gateway: "stripe",
-				RefID:   "ref1234",
 				Status:  "success",
 			},
 			mockError:        service.ErrTransactionNotFound,
@@ -166,7 +167,8 @@ func TestHandleUpdateStatus(t *testing.T) {
 				mockService.On("UpdateStatus", mock.Anything, mock.Anything).Return(tt.mockError)
 			}
 			body, _ := json.Marshal(tt.input)
-			req, _ := http.NewRequest("POST", "/update-status", bytes.NewBuffer(body))
+			req, _ := http.NewRequest("PATCH", "/api/v1/transactions/"+tt.transactionRefID+"/status", bytes.NewBuffer(body))
+			req.SetPathValue("id", tt.transactionRefID)
 			rr := httptest.NewRecorder()
 
 			res := handler.HandleUpdateStatus(rr, req)

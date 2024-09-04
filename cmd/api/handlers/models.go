@@ -42,7 +42,6 @@ type (
 	}
 	updateStatusApiRequest struct {
 		Gateway string `json:"gateway"`
-		RefID   string `json:"ref_id"`
 		Status  string `json:"status"`
 	}
 	gatewayACallbackRequest struct {
@@ -81,9 +80,6 @@ func (d *transactionApiRequest) validate() validation.Errors {
 
 func (c *updateStatusApiRequest) validate() validation.Errors {
 	var errors validation.Errors
-	if c.RefID == "" {
-		errors.Add("ref_id", "cannot be empty")
-	}
 	if c.Gateway == "" {
 		errors.Add("gateway", "cannot be empty")
 	}

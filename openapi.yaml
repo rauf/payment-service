@@ -1,0 +1,207 @@
+openapi: 3.1.0
+info:
+  title: Payment Service API
+  version: 1.0.0
+  description: API for handling payment transactions and gateway callbacks
+
+paths:
+  /api/v1/transactions:
+    post:
+      summary: Create a new transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '200':
+          description: Transaction sent to gateway successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /api/v1/transactions/{id}/status:
+    patch:
+      summary: Update transaction status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Status updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/gateways/gatewayA/callback:
+    post:
+      summary: Gateway A callback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GatewayACallbackRequest'
+      responses:
+        '200':
+          description: Status updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/gateways/gatewayB/callback:
+    post:
+      summary: Gateway B callback
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/GatewayBCallbackRequest'
+      responses:
+        '200':
+          description: Status updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    TransactionRequest:
+      type: object
+      required:
+        - amount
+        - type
+        - currency
+        - payment_method
+        - customer_id
+      properties:
+        amount:
+          type: number
+          format: float
+        type:
+          type: string
+          enum: [deposit, withdrawal]
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        payment_method:
+          type: string
+        description:
+          type: string
+        customer_id:
+          type: string
+        preferred_gateway:
+          type: string
+        metadata:
+          type: object
+
+    TransactionResponse:
+      type: object
+      properties:
+        ref_id:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        gateway:
+          type: string
+
+    UpdateStatusRequest:
+      type: object
+      required:
+        - gateway
+        - status
+      properties:
+        gateway:
+          type: string
+        status:
+          type: string
+          enum: [pending, success, failed]
+
+    GatewayACallbackRequest:
+      type: object
+      required:
+        - ref_id
+        - status
+      properties:
+        ref_id:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    GatewayBCallbackRequest:
+      type: object
+      xml:
+        name: callback
+      required:
+        - ref_id
+        - status
+      properties:
+        ref_id:
+          type: string
+          xml:
+            name: reference_id
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          xml:
+            name: timestamp
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ServiceUnavailable:
+      description: Service unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object

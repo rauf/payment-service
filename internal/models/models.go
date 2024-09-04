@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
+	"time"
 
 	"github.com/sqlc-dev/pqtype"
 )
@@ -110,5 +111,7 @@ type Transaction struct {
 	GatewayRefID     string                `json:"gatewayRefId"`
 	Status           TransactionStatus     `json:"status"`
 	PreferredGateway sql.NullString        `json:"preferredGateway"`
+	CreatedAt        time.Time             `json:"createdAt"`
+	UpdatedAt        time.Time             `json:"updatedAt"`
 	Metadata         pqtype.NullRawMessage `json:"metadata"`
 }

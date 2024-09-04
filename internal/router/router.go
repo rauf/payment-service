@@ -58,6 +58,7 @@ func (r *Router) SendMessage(ctx context.Context, preferredGateway string, opera
 			}, nil
 		}
 
+		slog.ErrorContext(ctx, "Gateway failed", "gateway", g.Name(), "error", err)
 		done(false)
 		if errors.Is(err, gateway.ErrGatewayUnavailable) {
 			continue

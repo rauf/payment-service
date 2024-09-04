@@ -22,11 +22,22 @@ CREATE TABLE IF NOT EXISTS transaction
     status            transaction_status NOT NULL DEFAULT 'PENDING',
     preferred_gateway VARCHAR(50),
     metadata JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (gateway_ref_id, gateway)
 );
 -- +goose StatementEnd
 
 -- +goose Down
+
 -- +goose StatementBegin
 DROP TABLE IF EXISTS transaction;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+DROP TYPE IF EXISTS transaction_status;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
+DROP TYPE IF EXISTS transaction_type;
 -- +goose StatementEnd

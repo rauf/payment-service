@@ -29,7 +29,7 @@ VALUES ($1,
 
 -- name: UpdateTransactionStatus :exec
 UPDATE transaction
-SET status = $1
+SET status = $1, updated_at = $4
 WHERE gateway_ref_id = $2 AND gateway = $3;
 
 -- name: GetTransactionByGatewayRefId :one

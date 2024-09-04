@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/sqlc-dev/pqtype"
 )
@@ -69,7 +70,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 }
 
 const getAll = `-- name: GetAll :one
-SELECT id, type, amount, currency, payment_method, description, customer_id, gateway, gateway_ref_id, status, preferred_gateway, metadata
+SELECT id, type, amount, currency, payment_method, description, customer_id, gateway, gateway_ref_id, status, preferred_gateway, created_at, updated_at, metadata
 FROM transaction
 `
 
@@ -88,13 +89,15 @@ func (q *Queries) GetAll(ctx context.Context) (Transaction, error) {
 		&i.GatewayRefID,
 		&i.Status,
 		&i.PreferredGateway,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Metadata,
 	)
 	return i, err
 }
 
 const getTransactionByGatewayRefId = `-- name: GetTransactionByGatewayRefId :one
-SELECT id, type, amount, currency, payment_method, description, customer_id, gateway, gateway_ref_id, status, preferred_gateway, metadata
+SELECT id, type, amount, currency, payment_method, description, customer_id, gateway, gateway_ref_id, status, preferred_gateway, created_at, updated_at, metadata
 FROM transaction
 WHERE gateway_ref_id = $1 AND gateway = $2
 `
@@ -119,6 +122,8 @@ func (q *Queries) GetTransactionByGatewayRefId(ctx context.Context, arg GetTrans
 		&i.GatewayRefID,
 		&i.Status,
 		&i.PreferredGateway,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.Metadata,
 	)
 	return i, err
@@ -126,7 +131,7 @@ func (q *Queries) GetTransactionByGatewayRefId(ctx context.Context, arg GetTrans
 
 const updateTransactionStatus = `-- name: UpdateTransactionStatus :exec
 UPDATE transaction
-SET status = $1
+SET status = $1, updated_at = $4
 WHERE gateway_ref_id = $2 AND gateway = $3
 `
 
@@ -134,9 +139,15 @@ type UpdateTransactionStatusParams struct {
 	Status       TransactionStatus `json:"status"`
 	GatewayRefID string            `json:"gatewayRefId"`
 	Gateway      string            `json:"gateway"`
+	UpdatedAt    time.Time         `json:"updatedAt"`
 }
 
 func (q *Queries) UpdateTransactionStatus(ctx context.Context, arg UpdateTransactionStatusParams) error {
-	_, err := q.db.ExecContext(ctx, updateTransactionStatus, arg.Status, arg.GatewayRefID, arg.Gateway)
+	_, err := q.db.ExecContext(ctx, updateTransactionStatus,
+		arg.Status,
+		arg.GatewayRefID,
+		arg.Gateway,
+		arg.UpdatedAt,
+	)
 	return err
 }

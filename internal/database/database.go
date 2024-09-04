@@ -9,6 +9,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const maxTries = 5
+
 type Config struct {
 	Driver       string
 	Port         int
@@ -28,10 +30,19 @@ type Database struct {
 
 func NewDatabase(dbConfig Config) (*Database, error) {
 	connString := connectionString(dbConfig)
-	db, err := connect(dbConfig.Driver, connString)
-	if err != nil {
+	var db *sql.DB
+	var err error
+	for range maxTries {
+		db, err = connect(dbConfig.Driver, connString)
+		if err == nil {
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	if err != nil || db == nil {
 		return &Database{}, fmt.Errorf("error connecting to DB: %w", err)
 	}
+
 	db.SetMaxOpenConns(dbConfig.MaxOpen)
 	db.SetMaxIdleConns(dbConfig.MaxIdle)
 	db.SetConnMaxLifetime(dbConfig.MaxLifetime)

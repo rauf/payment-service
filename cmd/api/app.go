@@ -35,11 +35,10 @@ func NewApplication(regis *registry.Registry[gateway.PaymentGateway], ph *handle
 // setupApplication creates a new application instance with the required dependencies.
 func setupApplication() (*Application, error) {
 	settings := gobreaker.Settings{ // TODO: take input from config
-		MaxRequests: 1,
-		Interval:    5 * time.Minute,
-		Timeout:     5 * time.Minute,
+		Interval: 5 * time.Minute,
+		Timeout:  5 * time.Minute,
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			return counts.ConsecutiveFailures > 1
+			return counts.ConsecutiveFailures > 3
 		},
 	}
 
